@@ -106,7 +106,8 @@ pub enum VSaleAccount {
     Current(SaleAccount),
 }
 
-#[derive(BorshSerialize, BorshDeserialize)]
+#[derive(BorshSerialize, BorshDeserialize, Serialize)]
+#[serde(crate = "near_sdk::serde")]
 pub struct SaleAccount {
     pub amount: U128,
 }

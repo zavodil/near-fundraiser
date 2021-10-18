@@ -25,10 +25,11 @@ const CREATE_ACCOUNT_AMOUNT: Balance = ONE_NEAR / 100;
 const REFERRAL_FEE_DENOMINATOR: u128 = 10000;
 const NEAR_ACCOUNT: &str = "near";
 
-#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
+#[derive(BorshDeserialize, BorshSerialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
 struct Account {
     referrer: AccountId,
+    #[serde(skip_serializing)]
     links: UnorderedSet<PublicKey>,
 }
 
@@ -39,6 +40,22 @@ impl Account {
             links: UnorderedSet::new(StorageKey::AccountLinks {
                 account_id: account_id.clone(),
             }),
+        }
+    }
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+struct AccountOutput {
+    referrer: AccountId,
+    links: Vec<PublicKey>,
+}
+
+impl From<Account> for AccountOutput{
+    fn from(a: Account) -> Self {
+        AccountOutput {
+            referrer: a.referrer,
+            links: a.links.to_vec()
         }
     }
 }
@@ -191,7 +208,7 @@ impl Contract {
         self.accounts.len()
     }
 
-    pub fn get_accounts(&self, from_index: u64, limit: u64) -> Vec<(AccountId, Account)> {
+    pub fn get_accounts(&self, from_index: u64, limit: u64) -> Vec<(AccountId, AccountOutput)> {
         let keys = self.accounts.keys_as_vector();
         let values = self.accounts.values_as_vector();
         (from_index..std::cmp::min(from_index + limit, keys.len()))
