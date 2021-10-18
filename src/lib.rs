@@ -1,7 +1,8 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LookupMap, UnorderedMap, UnorderedSet};
 use near_sdk::json_types::U128;
-use near_sdk::{env, near_bindgen, AccountId, Balance, BorshStorageKey, Gas, Promise, PublicKey};
+use near_sdk::{env, near_bindgen, AccountId, Balance, BorshStorageKey, Gas, Promise, PublicKey, PanicOnDefault};
+use near_sdk::serde::{Deserialize, Serialize};
 
 use crate::sale::VSale;
 use crate::token_receiver::ext_self;
@@ -24,7 +25,8 @@ const CREATE_ACCOUNT_AMOUNT: Balance = ONE_NEAR / 100;
 const REFERRAL_FEE_DENOMINATOR: u128 = 10000;
 const NEAR_ACCOUNT: &str = "near";
 
-#[derive(BorshSerialize, BorshDeserialize)]
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
 struct Account {
     referrer: AccountId,
     links: UnorderedSet<PublicKey>,
@@ -51,6 +53,7 @@ pub(crate) enum StorageKey {
 }
 
 #[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 struct Contract {
     owner_id: AccountId,
     join_fee: Balance,
@@ -73,6 +76,7 @@ impl Contract {
 
 #[near_bindgen]
 impl Contract {
+    #[init]
     pub fn new(owner_id: AccountId, join_fee: U128, referral_fees: Vec<u64>) -> Self {
         let mut this = Self {
             owner_id,
